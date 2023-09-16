@@ -1,0 +1,15 @@
+body {
+    font-family: Arial, sans-serif;
+    width: 250px;
+    padding: 10px;
+}
+
+h2 {
+    color: #333;
+    font-size: 1.2em;
+}
+
+#results {
+    margin-top: 15px;
+    color: #666;
+}
