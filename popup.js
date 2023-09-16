@@ -7,41 +7,6 @@ function updateResults(message, isError = false) {
     }
 }
 
-function getDomainAge(url) {
-    return new Promise((resolve, reject) => {
-        let domain = new URL(url).hostname;
-        let apiUrl = `https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=at_WXMdj3wIZbMsQ2pGpaIEJyINbGzpw&domainName=${domain}&outputFormat=JSON`;
-
-        fetch(apiUrl)
-            .then(response => response.json())
-            .then(data => {
-                let registrationDate = new Date(data.WhoisRecord.createdDate);
-                let currentDate = new Date();
-                let age = currentDate.getFullYear() - registrationDate.getFullYear();
-                resolve(age);
-            })
-            .catch(reject);
-    });
-}
-
-function getSSLCertificate(url) {
-    return new Promise((resolve, reject) => {
-        let domain = new URL(url).hostname;
-        let apiUrl = `https://ssl-certificates.whoisxmlapi.com/api/v1?apiKey=at_WXMdj3wIZbMsQ2pGpaIEJyINbGzpw&domainName=${domain}`;
-
-        fetch(apiUrl)
-            .then(response => response.json())
-            .then(data => {
-                if (data.certificates && data.certificates.length > 0) {
-                    resolve(data.certificates[0]);
-                } else {
-                    reject("No SSL certificates found.");
-                }
-            })
-            .catch(reject);
-    });
-}
-
 chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     let currentTab = tabs[0];
     let url = currentTab.url;
@@ -51,7 +16,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         return;
     }
 
-
     getDomainAge(url)
         .then(age => {
             updateResults(`Domain Age: ${age} years`);
@@ -59,7 +23,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         .catch(error => {
             updateResults(`Error retrieving domain age: ${error}`, true);
         });
-
 
     getSSLCertificate(url)
         .then(ssl => {
@@ -72,5 +35,16 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         .catch(error => {
             updateResults(`Error retrieving SSL certificate: ${error}`, true);
         });
-});
 
+    checkSafeBrowsing(url)
+        .then(matches => {
+            if (matches) {
+                updateResults(`WARNING! This domain may be unsafe due to: ${matches[0].threatType}`, true);
+            } else {
+                updateResults("This domain is considered SAFE by Google Safe Browsing.");
+            }
+        })
+        .catch(error => {
+            updateResults(`Error checking with Google Safe Browsing API: ${error}`, true);
+        });
+});

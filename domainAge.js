@@ -1,14 +1,16 @@
-// function fetchDomainAge(domain, callback) {
-//     fetch(`https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=at_WXMdj3wIZbMsQ2pGpaIEJyINbGzpw&domainName=${domain}&outputFormat=JSON`)
-//         .then(response => response.json())
-//         .then(data => {
-//             const creationDate = new Date(data.WhoisRecord.createdDate);
-//             const currentYear = new Date().getFullYear();
-//             const domainAge = currentYear - creationDate.getFullYear();
-//             callback(null, domainAge);
-//         })
-//         .catch(error => {
-//             console.error('Whois API Error:', error);
-//             callback(error);
-//         });
-// }
+function getDomainAge(url) {
+    return new Promise((resolve, reject) => {
+        let domain = new URL(url).hostname;
+        let apiUrl = `https://www.whoisxmlapi.com/whoisserver/WhoisService?apiKey=at_WXMdj3wIZbMsQ2pGpaIEJyINbGzpw&domainName=${domain}&outputFormat=JSON`;
+
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                let registrationDate = new Date(data.WhoisRecord.createdDate);
+                let currentDate = new Date();
+                let age = currentDate.getFullYear() - registrationDate.getFullYear();
+                resolve(age);
+            })
+            .catch(reject);
+    });
+}
