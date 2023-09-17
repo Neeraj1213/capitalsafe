@@ -1,7 +1,7 @@
-function updateResults(message, isError = false) {
+function updateResults(message, isHeading = false) {
     let resultsDiv = document.getElementById("results");
-    if (isError) {
-        resultsDiv.innerHTML += "<span style='color: red;'>" + message + "</span><br>";
+    if (isHeading) {
+        resultsDiv.innerHTML += "<h3>" + message + "</h3>";
     } else {
         resultsDiv.innerHTML += message + "<br>";
     }
@@ -11,40 +11,54 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     let currentTab = tabs[0];
     let url = currentTab.url;
 
+    let domainAge;
+    let sslInfo;
+    let isSafeBrowsing;
+
     if (!url.startsWith("https://")) {
-        updateResults("The site doesn't use a secure protocol.");
+        updateResults("Not Safe to Browse", true);
+        updateResults("This site doesn't use a secure protocol. It's not recommended to share any personal or financial information.");
         return;
     }
 
     getDomainAge(url)
         .then(age => {
-            updateResults(`Domain Age: ${age} years`);
+            domainAge = age;
+            return getSSLCertificate(url);
         })
-        .catch(error => {
-            updateResults(`Error retrieving domain age: ${error}`, true);
-        });
-
-    getSSLCertificate(url)
         .then(ssl => {
-            updateResults(`SSL Certificate - Chain Hierarchy: ${ssl.chainHierarchy}`);
-            updateResults(`Validation Type: ${ssl.validationType}`);
-            updateResults(`Valid from ${ssl.validFrom} to ${ssl.validTo}`);
-            updateResults(`Serial Number: ${ssl.serialNumber}`);
-            updateResults(`Signature Algorithm: ${ssl.signatureAlgorithm}`);
+            sslInfo = ssl;
+            return checkSafeBrowsing(url);
         })
-        .catch(error => {
-            updateResults(`Error retrieving SSL certificate: ${error}`, true);
-        });
-
-    checkSafeBrowsing(url)
         .then(matches => {
-            if (matches) {
-                updateResults(`WARNING! This domain may be unsafe due to: ${matches[0].threatType}`, true);
+            isSafeBrowsing = !matches;
+
+            if (isSafeBrowsing && domainAge > 1 && sslInfo) {
+                updateResults("Safe to Browse", true);
+                updateResults(`This site is considered safe by Google Safe Browsing, has been around for ${domainAge} years, and uses a secure SSL certificate.`);
+            } else if (isSafeBrowsing && domainAge <= 1 && sslInfo) {
+                updateResults("Safe to Browse with Caution", true);
+                updateResults("This site is considered safe by Google Safe Browsing, and uses a secure SSL certificate but has only been around for less than one year.");
             } else {
-                updateResults("This domain is considered SAFE by Google Safe Browsing.");
+                updateResults("Not Safe to Browse", true);
+                updateResults("This site has some safety concerns. Please be cautious.");
             }
+
+            if (domainAge) {
+                updateResults("<br>Domain Details:", true);
+                updateResults(`Age: ${domainAge} years`);
+            }
+
+            if (sslInfo) {
+                updateResults("<br>SSL Certificate:", true);
+                updateResults(`Type: ${sslInfo.chainHierarchy}`);
+                updateResults(`Validation: ${sslInfo.validationType}`);
+                updateResults(`Validity: ${sslInfo.validFrom} - ${sslInfo.validTo}`);
+            }
+
+            updateResults("<br>Remember, even safe websites can sometimes be compromised. Always avoid sharing personal or financial information unless you're certain.");
         })
         .catch(error => {
-            updateResults(`Error checking with Google Safe Browsing API: ${error}`, true);
+            updateResults(`Error: ${error}`, true);
         });
 });

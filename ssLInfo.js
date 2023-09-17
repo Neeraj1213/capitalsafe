@@ -1,7 +1,7 @@
 function getSSLCertificate(url) {
     return new Promise((resolve, reject) => {
         let domain = new URL(url).hostname;
-        let apiUrl = `https://ssl-certificates.whoisxmlapi.com/api/v1?apiKey=at_WXMdj3wIZbMsQ2pGpaIEJyINbGzpw&domainName=${domain}`;
+        let apiUrl = `https://ssl-certificates.whoisxmlapi.com/api/v1?apiKey=at_x9S2ZOyWcZZUIWd1fSoo6Rl4fYOco&domainName=${domain}`;
 
         fetch(apiUrl)
             .then(response => response.json())
