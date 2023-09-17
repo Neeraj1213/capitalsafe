@@ -1,17 +1,19 @@
 {
     "manifest_version": 3,
-    "name": "CapitalSafer",
+    "name": "CapitalSafe",
     "version": "1.0",
     "description": "Checks website for safety criteria",
     "permissions": ["activeTab"],
     "background": {
       "service_worker": "background.js"
     },
+    "icons": { 
+      "128" : "images/icon.png"
+    },
     "action": {
       "default_popup": "popup.html",
       "default_icon": { 
-
-        
+        "128": "images/icon.png"
 
       }
     }

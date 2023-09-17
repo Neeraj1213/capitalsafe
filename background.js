@@ -1,1 +1,0 @@
-// i have an empty image folder, background.js file with the code .. , index.html with code .., manifest.json file with the code .., and finally popup.js file with code ..
